@@ -4412,13 +4412,11 @@ ngx_http_upstream_process_request(ngx_http_request_t *r,
         }
 
 #endif
-
         if (p->upstream_done || p->upstream_eof || p->upstream_error) {
             ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                            "http upstream exit: %p", p->out);
 
-            if (p->upstream_done
-                || (p->upstream_eof && p->length == -1))
+            if (p->upstream_done || (p->upstream_eof && p->length == -1))
             {
                 ngx_http_upstream_finalize_request(r, u, 0);
                 return;
@@ -4431,7 +4429,7 @@ ngx_http_upstream_process_request(ngx_http_request_t *r,
 
             ngx_http_upstream_finalize_request(r, u, NGX_HTTP_BAD_GATEWAY);
             return;
-        }
+		} 
     }
 
     if (p->downstream_error) {

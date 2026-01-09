@@ -63,10 +63,15 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
     }
 
 */
-	s = 0 ;
-    c = ngx_get_connection(s, pc->log);
+//	int dummy_fd = open("/dev/null", O_RDWR);
+//    c = ngx_get_connection(dummy_fd, pc->log);
 
-    if (c == NULL) {
+    int sv[2];
+if (socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == 0) {
+    // Use sv[0] as your dummy FD
+    c = ngx_get_connection(sv[0], pc->log);
+}
+	if (c == NULL) {
         /*if (ngx_close_socket(s) == -1) {
             ngx_log_error(NGX_LOG_ALERT, pc->log, ngx_socket_errno,
                           ngx_close_socket_n " failed");
@@ -80,6 +85,8 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
 	c->send = sonic_lb_send_data_handler;
 	c->send_chain = sonic_lb_send_chain;
 	c->log_error = pc->log_error;
+	c->tcp_nodelay = NGX_TCP_NODELAY_DISABLED; // 1
+	c->tcp_nopush = NGX_TCP_NODELAY_DISABLED;   // 1
 
     rev = c->read;
     wev = c->write;
@@ -94,7 +101,9 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
 
 	// Set this to 0 to prevent Nginx from trying to call connect() again internally
 	c->write->active = 0;
-
+	c->recv = sonic_upstream_recv_dummy;
+	c->send = sonic_lb_send_data_handler;
+	c->send_chain = sonic_lb_send_chain;
     /*if (ngx_add_conn) {
         if (ngx_add_conn(c) == NGX_ERROR) {
             goto failed;
@@ -116,13 +125,12 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
 	inet_aton(glb_system_vars.my_ip_addr, &ip_src);
 	
 	child_ccb = tcp_new_conn(sin->sin_addr, ip_src, ntohs(sin->sin_port), upstream_port);
-	//memcpy(child_ccb->client_mac_addr, "\x08\x00\x27\xad\x80\xc5", 6);
     if (child_ccb == NULL) {
         return NGX_ERROR;
     }
 
 	//memcpy(child_ccb->client_mac_addr, client_mac_addr, ETHER_ADDR_LEN);
-
+	port_map[upstream_port].app_id = 7;
 	child_ccb->is_upstream = 1;
     child_ccb->connection = c;     // Link CCB to this Nginx Connection
     child_ccb->peer_ccb = parent_ccb;  // Link Child CCB -> Parent CCB
