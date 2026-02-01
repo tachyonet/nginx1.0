@@ -38,7 +38,7 @@ fi
 
 # ALL_INCS, required by the addons and by OpenWatcom C precompiled headers
 
-ngx_incs=`echo $CORE_INCS $NGX_OBJS $HTTP_INCS $MAIL_INCS $STREAM_INCS\
+ngx_incs=`echo $CORE_INCS $NGX_OBJS $HTTP_INCS $MAIL_INCS $STREAM_INCS ../../../lib/core ../../../lib/net ../../../lib/util ../\
     | sed -e "s/  *\([^ ][^ ]*\)/$ngx_regex_cont$ngx_include_opt\1/g" \
           -e "s/\//$ngx_regex_dirsep/g"`
 
@@ -58,7 +58,7 @@ ngx_deps=`echo $CORE_DEPS $NGX_AUTO_CONFIG_H $NGX_PCH \
     | sed -e "s/  *\([^ ][^ ]*\)/$ngx_regex_cont\1/g" \
           -e "s/\//$ngx_regex_dirsep/g"`
 
-ngx_incs=`echo $CORE_INCS $NGX_OBJS \
+ngx_incs=`echo $CORE_INCS $NGX_OBJS $HTTP_INCS ../../../lib/core ../../../lib/net ../../../lib/util ../\
     | sed -e "s/  *\([^ ][^ ]*\)/$ngx_regex_cont$ngx_include_opt\1/g" \
           -e "s/\//$ngx_regex_dirsep/g"`
 
@@ -227,11 +227,11 @@ cat << END                                                    >> $NGX_MAKEFILE
 
 build:	binary modules manpage
 
-binary:	$NGX_OBJS${ngx_dirsep}nginx$ngx_binext
+# We change the target name to libnginx.a and swap $(LINK) for 'ar rcs'
+binary:	$NGX_OBJS${ngx_dirsep}libnginx.a
 
-$NGX_OBJS${ngx_dirsep}nginx$ngx_binext:	$ngx_deps$ngx_spacer
-	\$(LINK) $ngx_long_start$ngx_binout$NGX_OBJS${ngx_dirsep}nginx$ngx_binext$ngx_long_cont$ngx_objs$ngx_libs$ngx_link$ngx_main_link
-	$ngx_rcc
+$NGX_OBJS${ngx_dirsep}libnginx.a:	$ngx_deps$ngx_spacer
+	ar rcs $NGX_OBJS${ngx_dirsep}libnginx.a $ngx_objs
 $ngx_long_end
 
 modules:
